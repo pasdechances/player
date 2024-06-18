@@ -1,2 +1,5 @@
-# radio
-web radio api
+# dependences
+
+pip install pytube
+
+node + npm

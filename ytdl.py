@@ -3,7 +3,7 @@ from pytube import YouTube
 
 # Dossier de destination
 download_folder = "musics"
-list_folder = "musics/list/list.txt"
+list_folder = "list/list.txt"
 
 # Fonction pour formater le titre de la vidéo
 def format_filename(title):

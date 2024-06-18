@@ -6,12 +6,17 @@ download_folder = "musics"
 list_folder = "list/list.txt"
 
 # Fonction pour formater le titre de la vidéo
-def format_filename(title):
-    invalid_chars = '<>:"/\\|?*'
+def format_filename(title, ext):
+    invalid_chars = '<>:"/\\|?*[](),;!$-'
+    title = title.encode('utf-8', 'replace').decode('utf-8')
     for char in invalid_chars:
-        title = title.replace(char, '_')
-    title = title.encode('utf-8', 'ignore').decode('utf-8')
-    return title[:255]
+        title = title.replace(char, '')
+    title = title.replace('  ', '_')
+    title = title.replace(' ', '_')
+
+    max_length = 255 - len(ext) - 1 
+    title = title[:max_length]
+    return f"{title}.{ext}"
 
 # Fonction principale
 def main(download_folder, list_folder):
@@ -28,7 +33,13 @@ def main(download_folder, list_folder):
         try:
             yt = YouTube(url.strip())
             stream = yt.streams.get_highest_resolution()
-            formatted_title = format_filename(yt.title)
+            ext = stream.mime_type.split('/')[-1]
+            formatted_title = format_filename(yt.title, ext)
+            file_path = os.path.join(download_folder, formatted_title)
+            if os.path.exists(file_path):
+                print(f'Le fichier existe déjà: {formatted_title}')
+                continue
+            
             stream.download(output_path=download_folder, filename=formatted_title)
             print(f'Téléchargé: {formatted_title}')
         except Exception as e:

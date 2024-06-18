@@ -1,4 +1,5 @@
 import os
+import re
 from pytube import YouTube
 
 # Dossier de destination
@@ -7,13 +8,8 @@ list_folder = "list/list.txt"
 
 # Fonction pour formater le titre de la vidéo
 def format_filename(title, ext):
-    invalid_chars = '<>:"/\\|?*[](),;!$-'
-    title = title.encode('utf-8', 'replace').decode('utf-8')
-    for char in invalid_chars:
-        title = title.replace(char, '')
-    title = title.replace('  ', '_')
+    title = re.sub(r'[^\w\s-]', '', title)
     title = title.replace(' ', '_')
-
     max_length = 255 - len(ext) - 1 
     title = title[:max_length]
     return f"{title}.{ext}"

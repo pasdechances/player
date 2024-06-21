@@ -39,7 +39,7 @@ function playBuffer() {
         source.connect(gainNode);
         gainNode.connect(context.destination);
         source.loop = true;
-        startTime = context.currentTime - elapsedTime;
+        console.log(elapsedTime)
         source.start(0, elapsedTime);
         isPlaying = true;
         manuallyStopped = false;

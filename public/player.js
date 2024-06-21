@@ -24,6 +24,7 @@ let isLoadingTrack = false;
 async function loadAudio(url) {
     try {
         console.log("loading")
+        resetAudio()
         isLoadingTrack = true;
         const response = await fetch(url);
         const arrayBuffer = await response.arrayBuffer();
@@ -58,7 +59,6 @@ function onEndTrack(){
     isPlaying = false;
     if (!manuallyStopped && !isLoadingTrack) {
         console.log("rand")
-        resetAudio()
         loadAudio("/random-music")
     } 
     else if(seeking) {
@@ -99,7 +99,6 @@ function resetAudio(){
 
 shuffleButton.onclick = () => {
     stopPlayback()
-    resetAudio()
     loadAudio("/random-music")
 };
 

@@ -9,7 +9,7 @@ const server = http.createServer(app);
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/public/index.html');
+    res.sendFile(__dirname + '/public/player.html');
 });
 
 app.get('/music', async (req, res) => {

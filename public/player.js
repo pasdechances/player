@@ -19,16 +19,20 @@ let elapsedTime = 0;
 let manuallyStopped = false;
 let muted = false;
 let seeking = false;
-let timerChange = false
+let isLoadingTrack = false;
 
 async function loadAudio(url) {
     try {
+        console.log("loading")
+        isLoadingTrack = true;
         const response = await fetch(url);
         const arrayBuffer = await response.arrayBuffer();
         audioBuffer = await context.decodeAudioData(arrayBuffer);
         playBuffer();
     } catch (err) {
         console.error(`Unable to fetch the audio file. Error: ${err.message}`);
+    } finally {
+        isLoadingTrack = false;
     }
 }
 
@@ -38,26 +42,30 @@ function playBuffer() {
         source.buffer = audioBuffer;
         source.connect(gainNode);
         gainNode.connect(context.destination);
-        source.loop = true;
+        source.loop = false;
+        startTime = context.currentTime - elapsedTime;
         console.log(elapsedTime)
         source.start(0, elapsedTime);
+        console.log("play");
         isPlaying = true;
         manuallyStopped = false;
-
-        source.onended = () => {
-            isPlaying = false;
-            if (!manuallyStopped) {
-                loadAudio("/random-music")
-            } 
-            else if(seeking) {
-                playBuffer();
-                seeking = false;
-            }
-        };
-
+        source.onended = onEndTrack
         requestAnimationFrame(updateElapsedTime);
     }
 }
+
+function onEndTrack(){
+    isPlaying = false;
+    if (!manuallyStopped && !isLoadingTrack) {
+        console.log("rand")
+        resetAudio()
+        loadAudio("/random-music")
+    } 
+    else if(seeking) {
+        playBuffer();
+        seeking = false;
+    }
+};
 
 function stopPlayback() {
     console.log("stop")
@@ -80,15 +88,18 @@ function updateElapsedTime() {
     }
 }
 
-
-shuffleButton.onclick = () => {
-    stopPlayback()
+function resetAudio(){
     if (source) {
         elapsedTime = 0
         context.currentTime = 0
         audioBuffer = null;
         console.log(audioBuffer)
     }
+}
+
+shuffleButton.onclick = () => {
+    stopPlayback()
+    resetAudio()
     loadAudio("/random-music")
 };
 
@@ -109,7 +120,6 @@ timeRange.oninput = () => {
 
 timeRange.onchange = () => {
     elapsedTime = parseFloat(timeRange.value);
-    timerChange = true
     if (isPlaying) {
         stopPlayback();
     }

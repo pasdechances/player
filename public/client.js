@@ -1,27 +1,69 @@
-const audioPlayer = document.getElementById('audio-player');
+window.AudioContext = window.AudioContext || window.webkitAudioContext;
+const volumeButton = document.getElementById('volume')
+const playButton = document.getElementById('play')
+const stopButton = document.getElementById('stop')
+const shuffleButton = document.getElementById('shuffle')
 
-        async function loadRandomMusic() {
-            const response = await fetch('/random-music');
-            const blob = await response.blob();
-            const index = response.headers.get('X-Music-Index');
-            const filename = response.headers.get('X-Music-Name');
-            audioPlayer.src = URL.createObjectURL(blob);
-            document.getElementById('song-name').innerHTML = filename
-        }
+let context = new AudioContext();
+let source = null;
+let gainNode = context.createGain();
+let isPlaying = false;
+let audioBuffer = null;
+let offset = 0
 
-        async function playMusic() {
-            await loadRandomMusic();
-            audioPlayer.play()
-        }
+async function loadAudio(url) {
+    try {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        audioBuffer = await context.decodeAudioData(arrayBuffer);
+        playBuffer();
+    } catch (err) {
+        console.error(`Unable to fetch the audio file. Error: ${err.message}`);
+    }
+}
 
-        document.getElementById('shuffle').onclick = async () => {
-            await playMusic();
+function playBuffer() {
+    if (audioBuffer) {
+        source = context.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(gainNode);
+        gainNode.connect(context.destination);
+        source.loop = true;
+        source.start(0, offset);
+        isPlaying = true;
+
+        source.onended = () => {
+            isPlaying = false;
         };
+    }
+}
 
-        audioPlayer.addEventListener('ended', async () => {
-            await playMusic();
-        });
+function stopPlayback() {
+    if (isPlaying) {
+        source.stop();
+        isPlaying = false;
+    }
+}
 
-        window.onload = () => {
-            loadRandomMusic();
-        };
+
+
+shuffleButton.onclick = () => {
+    loadAudio("/random-music")
+};
+
+stopButton.onclick = () => {
+    source.stopPlayback();
+};
+
+playButton.onclick = () => {
+    if (!isPlaying) {
+        playBuffer();
+    }
+};
+
+volumeButton.oninput  = () => {
+    gainNode.gain.value = volumeButton.value / 10;
+    console.log(`Volume set to: ${gainNode.gain.value}`);
+};
+
+loadAudio("/random-music");

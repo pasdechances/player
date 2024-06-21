@@ -9,9 +9,14 @@
     <h1>Music Streaming</h1>
     <div id="music-controls">
         <div id="song-name"></div>
+        <button id="play">play</button>
+        <button id="stop">stop</button>
         <button id="shuffle">Shuffle</button>
     </div>
-    <audio id="audio-player" controls autoplay></audio>
+    <input type="range" id="volume" name="volume" min="0" max="10" />
+        <label for="volume">Volume</label>
+    </div>
+    <!-- <audio id="audio-player" controls autoplay></audio> -->
     <script src="client.js">    
     </script>
 </body>

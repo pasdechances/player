@@ -1,21 +1,21 @@
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
-const volumeText = document.getElementById('volume')
-const volumeRange = document.getElementById('volume-range')
-const volumeMute = document.getElementById('volume-Mute')
-const playButton = document.getElementById('play')
-const stopButton = document.getElementById('stop')
-const shuffleButton = document.getElementById('shuffle')
-const timeText = document.getElementById('time')
-const timeRange = document.getElementById('time-range')
+const volumeText = document.getElementById('volume');
+const volumeRange = document.getElementById('volume-range');
+const volumeMute = document.getElementById('volume-Mute');
+const playButton = document.getElementById('play');
+const stopButton = document.getElementById('stop');
+const shuffleButton = document.getElementById('shuffle');
+const timeText = document.getElementById('time');
+const timeRange = document.getElementById('time-range');
 
 let context = new AudioContext();
-let source = null;
 let gainNode = context.createGain();
-let isPlaying = false;
 let audioBuffer = null;
+let source = null;
 let startTime = 0;
 let pauseTime = 0;
 let elapsedTime = 0;
+let isPlaying = false;
 let manuallyStopped = false;
 let muted = false;
 let seeking = false;
@@ -23,7 +23,6 @@ let isLoadingTrack = false;
 
 async function loadAudio(url) {
     try {
-        console.log("loading")
         resetAudio()
         isLoadingTrack = true;
         const response = await fetch(url);
@@ -47,7 +46,6 @@ function playBuffer() {
         startTime = context.currentTime - elapsedTime;
         console.log(elapsedTime)
         source.start(0, elapsedTime);
-        console.log("play");
         isPlaying = true;
         manuallyStopped = false;
         source.onended = onEndTrack
@@ -58,7 +56,6 @@ function playBuffer() {
 function onEndTrack(){
     isPlaying = false;
     if (!manuallyStopped && !isLoadingTrack) {
-        console.log("rand")
         loadAudio("/random-music")
     } 
     else if(seeking) {
@@ -68,7 +65,6 @@ function onEndTrack(){
 };
 
 function stopPlayback() {
-    console.log("stop")
     manuallyStopped = true
     if (isPlaying) {
         source.stop();
@@ -89,12 +85,9 @@ function updateElapsedTime() {
 }
 
 function resetAudio(){
-    if (source) {
-        elapsedTime = 0
-        context.currentTime = 0
-        audioBuffer = null;
-        console.log(audioBuffer)
-    }
+    elapsedTime = 0
+    context.currentTime = 0
+    audioBuffer = null;
 }
 
 shuffleButton.onclick = () => {
@@ -127,7 +120,6 @@ timeRange.onchange = () => {
 volumeRange.oninput  = () => {
     gainNode.gain.value = volumeRange.value / 10;
     volumeText.innerText = volumeRange.value;
-    console.log(`Volume set to: ${gainNode.gain.value}`);
 };
 
 volumeMute.onclick  = () => {

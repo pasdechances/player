@@ -7,14 +7,19 @@
 </head>
 <body>
     <h1>Music Streaming</h1>
-    <div id="music-controls">
+    <div>
         <div id="song-name"></div>
         <button id="play">play</button>
         <button id="stop">stop</button>
         <button id="shuffle">Shuffle</button>
     </div>
-    <input type="range" id="volume" name="volume" min="0" max="10" />
-        <label for="volume">Volume</label>
+    <div>
+        <input type="range" id="volume-range" name="volume" min="0" max="10" />
+        <label for="volume">Volume </label><label id="volume">5</label><span> </span><button id="volume-Mute">Mute</button>
+    </div>
+    <div>
+        <input type="range" id="time-range" name="volume" min="0" max="100" value="0"/>
+        <label id="time">0</label><label>s</label>
     </div>
     <!-- <audio id="audio-player" controls autoplay></audio> -->
     <script src="client.js">    

@@ -4,73 +4,102 @@ const volumeRange = document.getElementById('volume-range');
 const volumeMute = document.getElementById('volume-Mute');
 const playButton = document.getElementById('play');
 const stopButton = document.getElementById('stop');
-const shuffleButton = document.getElementById('shuffle');
 const timeText = document.getElementById('time');
 const timeRange = document.getElementById('time-range');
 
 let context = new AudioContext();
 let gainNode = context.createGain();
-let audioBuffer = null;
 let source = null;
 let startTime = 0;
-let pauseTime = 0;
 let elapsedTime = 0;
 let isPlaying = false;
-let manuallyStopped = false;
 let muted = false;
 let seeking = false;
-let isLoadingTrack = false;
+let audioQueue = [];
+let audioBuffer = null;
 
-async function loadAudio(url) {
-    try {
-        resetAudio()
-        isLoadingTrack = true;
-        const response = await fetch(url);
-        const arrayBuffer = await response.arrayBuffer();
-        audioBuffer = await context.decodeAudioData(arrayBuffer);
+const socket = io();
+
+// Event listeners for HTML elements
+playButton.addEventListener('click', () => {
+    if (!isPlaying) {
         playBuffer();
-    } catch (err) {
-        console.error(`Unable to fetch the audio file. Error: ${err.message}`);
-    } finally {
-        isLoadingTrack = false;
     }
-}
+});
+
+stopButton.addEventListener('click', () => {
+    stopPlayback();
+});
+
+volumeRange.addEventListener('input', () => {
+    gainNode.gain.value = volumeRange.value / 10;
+    volumeText.innerText = volumeRange.value;
+});
+
+volumeMute.addEventListener('click', () => {
+    muted = !muted;
+    gainNode.gain.value = muted ? 0 : volumeRange.value / 10;
+    volumeMute.innerText = muted ? "Mute On" : "Mute Off";
+});
+
+timeRange.addEventListener('input', () => {
+    seeking = true;
+    timeText.innerHTML = timeRange.value;
+});
+
+timeRange.addEventListener('change', () => {
+    elapsedTime = parseFloat(timeRange.value);
+    if (isPlaying) {
+        stopPlayback();
+        playBuffer();
+    }
+    seeking = false;
+});
+
+socket.on('audio', chunk => {
+    if (!isPlaying) {
+        audioQueue = [];
+        return;
+    }
+    const uint8Chunk = new Uint8Array(chunk);
+    context.decodeAudioData(uint8Chunk.buffer, buffer => {
+        audioQueue.push(buffer);
+        if (!source) {
+            playBuffer();
+        }
+    });
+});
 
 function playBuffer() {
-    if (audioBuffer) {
+    if (audioQueue.length > 0) {
+        audioBuffer = audioQueue.shift();
         source = context.createBufferSource();
         source.buffer = audioBuffer;
         source.connect(gainNode);
         gainNode.connect(context.destination);
-        source.loop = false;
-        startTime = context.currentTime - elapsedTime;
-        console.log(elapsedTime)
         source.start(0, elapsedTime);
+        startTime = context.currentTime - elapsedTime;
         isPlaying = true;
-        manuallyStopped = false;
-        source.onended = onEndTrack
+        source.onended = () => {
+            if (audioQueue.length > 0) {
+                playBuffer();
+            } else {
+                isPlaying = false;
+            }
+        };
         requestAnimationFrame(updateElapsedTime);
     }
 }
 
-function onEndTrack(){
-    isPlaying = false;
-    if (!manuallyStopped && !isLoadingTrack) {
-        loadAudio("/random-music")
-    } 
-    else if(seeking) {
-        playBuffer();
-        seeking = false;
-    }
-};
-
 function stopPlayback() {
-    manuallyStopped = true
-    if (isPlaying) {
+    if (isPlaying && source) {
         source.stop();
         source.disconnect();
         isPlaying = false;
         source = null;
+        elapsedTime = 0;
+        timeText.innerHTML = '0';
+        timeRange.value = '0';
     }
 }
 
@@ -78,60 +107,7 @@ function updateElapsedTime() {
     if (isPlaying && !seeking) {
         elapsedTime = context.currentTime - startTime;
         timeText.innerHTML = elapsedTime.toFixed(0);
-        timeRange.max = audioBuffer.duration;
         timeRange.value = elapsedTime;
         requestAnimationFrame(updateElapsedTime);
     }
 }
-
-function resetAudio(){
-    elapsedTime = 0
-    context.currentTime = 0
-    audioBuffer = null;
-}
-
-shuffleButton.onclick = () => {
-    stopPlayback()
-    loadAudio("/random-music")
-};
-
-stopButton.onclick = () => {
-    stopPlayback();
-};
-
-playButton.onclick = () => {
-    if (!isPlaying) {
-        playBuffer();
-    }
-};
-
-timeRange.oninput = () => {
-    seeking = true;
-    timeText.innerHTML = timeRange.value;
-};
-
-timeRange.onchange = () => {
-    elapsedTime = parseFloat(timeRange.value);
-    if (isPlaying) {
-        stopPlayback();
-    }
-};
-
-volumeRange.oninput  = () => {
-    gainNode.gain.value = volumeRange.value / 10;
-    volumeText.innerText = volumeRange.value;
-};
-
-volumeMute.onclick  = () => {
-    if(!muted){
-        gainNode.gain.value = 0;
-        volumeMute.innerText = " Mute On";
-    }
-    else{
-        gainNode.gain.value = volumeRange.value / 10;
-        volumeMute.innerText = " Mute Off";
-    }
-    muted=!muted
-};
-
-loadAudio("/random-music");

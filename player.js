@@ -4,6 +4,7 @@ const path = require('path');
 const { getMusicFiles, getMusicFilePath, getRandomMusicFile } = require('./functions');
 
 const app = express();
+const PORT = 3001;
 const server = http.createServer(app);
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -58,9 +59,6 @@ app.get('/random-music/:current', async (req, res) => {
         }
     });
 });
-
-
-const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, async () => {
     const musicFiles = await getMusicFiles();

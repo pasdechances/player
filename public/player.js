@@ -44,6 +44,7 @@ async function loadAudio(url) {
 
 function onEndTrack() {
     if(!seeking){
+        console.log("load")
         loadAudio("/random-music");
 
     }
@@ -68,7 +69,6 @@ function resetAudio() {
     startTime = 0;
     pauseTime = 0;
     elapsedTime = 0;
-    seeking = false;
     isLoadingTrack = false;
 }
 
@@ -85,7 +85,7 @@ stopButton.onclick = () => {
 
 playButton.onclick = () => {
     if(source){
-        source.context.resume(); 
+        source.context.resume();
     }
 };
 
@@ -94,16 +94,32 @@ timeRange.oninput = () => {
     timeText.innerHTML = timeRange.value;
 };
 
-timeRange.onchange = () => {
+timeRange.onchange = async () => {
     elapsedTime = parseFloat(timeRange.value);
     if (source) {
-        source.context.suspend();
-
-        source.context.resume(); 
+        isPlaying = false;
+        await stopSource(source);
+        startTime = context.currentTime - elapsedTime;
+        source = context.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(gainNode);
+        gainNode.connect(context.destination);
+        source.start(0, elapsedTime);
+        isPlaying = true;
+        source.onended = onEndTrack;
+        requestAnimationFrame(updateElapsedTime);
     }
-    requestAnimationFrame(updateElapsedTime);
     seeking = false;
 };
+
+async function stopSource(source) {
+    return new Promise((resolve, reject) => {
+        source.onended = () => {
+            resolve();
+        };
+        source.stop();
+    });
+}
 
 volumeRange.oninput = () => {
     gainNode.gain.value = volumeRange.value / 10;

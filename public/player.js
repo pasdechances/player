@@ -26,14 +26,7 @@ async function loadAudio(url) {
         const response = await fetch(url);
         const arrayBuffer = await response.arrayBuffer();
         audioBuffer = await context.decodeAudioData(arrayBuffer);
-        source = context.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(gainNode);
-        gainNode.connect(context.destination);
-        source.loop = false;
-        startTime = context.currentTime;
-        source.start(0, elapsedTime);
-        source.onended = onEndTrack;
+        sourceLaunch();
         requestAnimationFrame(updateElapsedTime);
     } catch (err) {
         console.error(`Unable to fetch the audio file. Error: ${err.message}`);
@@ -42,11 +35,38 @@ async function loadAudio(url) {
     }
 }
 
+function sourceLaunch(){
+    source = context.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(gainNode);
+    gainNode.connect(context.destination);
+    source.loop = false;
+    startTime = context.currentTime - elapsedTime;
+    source.start(0, elapsedTime);
+    togglePlayStop()
+    source.context.onstatechange = onChangeState;
+    source.onended = onEndTrack;
+}
+
 function onEndTrack() {
     if(!seeking){
         console.log("load")
         loadAudio("/random-music");
+    }
+}
 
+function onChangeState(test) {
+    console.log(source.context.state)
+    togglePlayStop()
+}
+
+function togglePlayStop(){
+    if(source.context.state == "running"){
+        playButton.disabled = true
+        stopButton.disabled = false
+    } else if(source.context.state == "suspended"){
+        playButton.disabled = false
+        stopButton.disabled = true
     }
 }
 
@@ -97,16 +117,8 @@ timeRange.oninput = () => {
 timeRange.onchange = async () => {
     elapsedTime = parseFloat(timeRange.value);
     if (source) {
-        isPlaying = false;
         await stopSource(source);
-        startTime = context.currentTime - elapsedTime;
-        source = context.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(gainNode);
-        gainNode.connect(context.destination);
-        source.start(0, elapsedTime);
-        isPlaying = true;
-        source.onended = onEndTrack;
+        sourceLaunch();
         requestAnimationFrame(updateElapsedTime);
     }
     seeking = false;

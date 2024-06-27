@@ -6,6 +6,8 @@ const stopButton = document.getElementById('stop');
 const shuffleButton = document.getElementById('shuffle');
 const timeText = document.getElementById('time');
 const timeRange = document.getElementById('time-range');
+const title = document.getElementById('song-name');
+const limit = 10;
 
 let context = null;
 let gainNode = null;
@@ -23,7 +25,9 @@ async function loadAudio(url) {
         resetAudio();
         isLoadingTrack = true;
         const response = await fetch(url);
+        
         const arrayBuffer = await response.arrayBuffer();
+        title.innerHTML = response.headers.get('X-Music-Name').substring(0, limit)
         audioBuffer = await context.decodeAudioData(arrayBuffer);
         sourceLaunch();
         requestAnimationFrame(updateElapsedTime);

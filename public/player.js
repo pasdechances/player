@@ -1,5 +1,4 @@
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
-const volumeText = document.getElementById('volume');
 const volumeRange = document.getElementById('volume-range');
 const volumeMute = document.getElementById('volume-Mute');
 const playButton = document.getElementById('play');
@@ -135,7 +134,6 @@ async function stopSource(source) {
 
 volumeRange.oninput = () => {
     gainNode.gain.value = volumeRange.value / 10;
-    volumeText.innerText = volumeRange.value;
 };
 
 volumeMute.onclick = () => {
